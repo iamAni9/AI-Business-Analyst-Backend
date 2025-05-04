@@ -20,7 +20,7 @@ export interface UserData {
 }
 export const createUserData = async () => {
     // Drop existing user_data table if it exists
-    // await query('DROP TABLE IF EXISTS user_data CASCADE');
+    await query('DROP TABLE IF EXISTS user_data CASCADE');
     const createUserDataQuery = `
         CREATE TABLE IF NOT EXISTS user_data (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -43,7 +43,7 @@ export const createUserData = async () => {
 // Create users table if it doesn't exist
 export const createUsersTable = async () => {
     // Drop existing users table if it exists
-    // await query('DROP TABLE IF EXISTS users CASCADE');
+    await query('DROP TABLE IF EXISTS users CASCADE');
     const createTableQuery = `
         CREATE TABLE IF NOT EXISTS users (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
