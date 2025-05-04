@@ -407,7 +407,7 @@ const uploadData = async (req: Request & { file?: Express.Multer.File }, res: Re
                     if (err) {
                         console.error('Failed to delete uploaded file:', err);
                     } else {
-                        console.log('Uploaded file deleted:', req.file.path);
+                        console.log('Uploaded file deleted:', req.file?.path);
                     }
                 });
             }
