@@ -386,6 +386,21 @@ const uploadData = async (req: Request & { file?: Express.Multer.File }, res: Re
                 throw new Error('Missing required fields: email, tableName, or user_id');
             }
 
+            // Check if user exists
+            const userCheck = await query('SELECT id FROM users WHERE id = $1', [user_id]);
+            
+            if (userCheck.rows.length === 0) {
+                // User doesn't exist, create a new user
+                console.log('User not found, creating new user...');
+                const newUser = await query(
+                    `INSERT INTO users (id, email, name, password) 
+                     VALUES ($1, $2, $3, $4) 
+                     RETURNING id`,
+                    [user_id, email, email.split('@')[0], 'default_password'] // You might want to handle this differently
+                );
+                console.log('New user created with ID:', newUser.rows[0].id);
+            }
+
             const userDataResult = await query(
                 `INSERT INTO user_data (email, table_name, user_id) 
                 VALUES ($1, $2, $3) 
