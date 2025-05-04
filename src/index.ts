@@ -40,6 +40,10 @@ initializeDatabase().then(() => {
     app.use('/api/v1/data', dataRoutes);
     app.use('/api/v1/chat', chatRoutes  );
 
+    app.get('/health', (req, res) => {
+        res.status(200).json({ status: 'ok' });
+    });
+
     app.listen(PORT, () => {
         console.log(`Server is running on port ${PORT}`);
     });
