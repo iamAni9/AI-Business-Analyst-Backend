@@ -3,6 +3,7 @@ import { createReadStream } from 'fs';
 import { parse } from 'csv-parse';
 import { query } from "../config/db";
 import { analyzeTable } from "../helper/tableAnalyzer";
+import fs from 'fs';
 
 function isValidDate(value: string): boolean {
     // Handle empty, null values, or non-string values
@@ -399,6 +400,17 @@ const uploadData = async (req: Request & { file?: Express.Multer.File }, res: Re
                 success: true,
                 message: 'CSV data successfully imported to database',
             });
+
+            // Delete the uploaded file after processing
+            if (req.file && req.file.path) {
+                fs.unlink(req.file.path, (err) => {
+                    if (err) {
+                        console.error('Failed to delete uploaded file:', err);
+                    } else {
+                        console.log('Uploaded file deleted:', req.file.path);
+                    }
+                });
+            }
         } catch (error) {
             console.error('❌ Error recording user data:', error);
             console.error('Parameters:', { email, tableName, user_id });

@@ -7,6 +7,7 @@ import userRoutes from "./routes/userRoutes";
 import { createUsersTable } from "./models/userModel";
 import dataRoutes from "./routes/dataRoutes";
 import chatRoutes from "./routes/chatRoutes";
+import fs from 'fs';
 
 
 dotenv.config();
@@ -17,6 +18,11 @@ app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.json());
+
+const uploadDir = './uploads';
+if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir);
+}
 
 // Initialize database tables
 const initializeDatabase = async () => {
