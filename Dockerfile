@@ -46,6 +46,9 @@ while ! nc -z $POSTGRES_HOST $POSTGRES_PORT; do\n\
 done\n\
 echo "PostgreSQL is ready!"\n\
 \n\
+echo "Resetting database schema..."\n\
+PGPASSWORD=$POSTGRES_PASSWORD psql -h $POSTGRES_HOST -U $POSTGRES_USER -d $POSTGRES_DB -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"\n\
+\n\
 echo "Running database migrations..."\n\
 npm run migrate\n\
 \n\
@@ -53,8 +56,8 @@ echo "Starting application..."\n\
 node dist/index.js' > /app/start.sh && \
 chmod +x /app/start.sh
 
-# Install netcat for the wait script
-RUN apt-get update && apt-get install -y netcat-traditional && rm -rf /var/lib/apt/lists/*
+# Install netcat and postgresql-client for the wait script
+RUN apt-get update && apt-get install -y netcat-traditional postgresql-client && rm -rf /var/lib/apt/lists/*
 
 # Start the application with initialization
 CMD ["/app/start.sh"] 
