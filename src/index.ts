@@ -7,6 +7,7 @@ import dotenv from 'dotenv';
 import userRoutes from "./routes/userRoutes";
 import dataRoutes from "./routes/dataRoutes";
 import chatRoutes from "./routes/chatRoutes";
+import { query } from "./ai/client";
 
 // Load environment variables
 dotenv.config();
@@ -42,6 +43,19 @@ app.get('/health', (req, res) => {
   });
 });
 
+async function main(){
+  try {
+    logger
+    const res = await query("What is the capital of France?", "You are a helpful assistant that can answer questions about the world.")
+    logger.info(res)
+    console.log(res)
+    } catch (error) {
+    logger.error(error)
+    console.log(error)
+  }
+}
+
+main()
 app.use("/v1/api/users", userRoutes)
 app.use("/v1/api/data", dataRoutes)
 app.use("/v1/api/chat", chatRoutes)
