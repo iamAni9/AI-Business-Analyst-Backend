@@ -46,12 +46,6 @@ echo "PostgreSQL is ready!"\n\
 echo "Running database migrations..."\n\
 npm run migrate\n\
 \n\
-echo "Initializing analysis data..."\n\
-npm run init:analysis\n\
-\n\
-echo "Initializing user data..."\n\
-npm run init:userdata\n\
-\n\
 echo "Starting application..."\n\
 node dist/index.js' > /app/start.sh && \
 chmod +x /app/start.sh
