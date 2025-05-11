@@ -6,22 +6,14 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-// Validate environment variables
-const requiredEnvVars = ['POSTGRES_URI'];
-const missingEnvVars = requiredEnvVars.filter(envVar => !process.env[envVar]);
 
-if (missingEnvVars.length > 0) {
-  throw new Error(`Missing required environment variables: ${missingEnvVars.join(', ')}`);
-}
-
-// Validate PostgreSQL connection string format
-const postgresUri = process.env.POSTGRES_URI!;
-if (!postgresUri.startsWith('postgres://') && !postgresUri.startsWith('postgresql://')) {
-  throw new Error('POSTGRES_URI must start with postgres:// or postgresql://');
-}
 
 const pool = new Pool({
-  connectionString: postgresUri,
+  user: process.env.POSTGRES_USER,
+    database: process.env.POSTGRES_DB,
+    password: process.env.POSTGRES_PASSWORD,
+    host: process.env.POSTGRES_HOST,
+    port: parseInt(process.env.POSTGRES_PORT || "5432"),
   // Add connection timeout
   connectionTimeoutMillis: 5000,
 });
