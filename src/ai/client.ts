@@ -1,4 +1,6 @@
 import { ChatVertexAI } from "@langchain/google-vertexai";
+import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
+
 import dotenv from "dotenv";
 import logger from "../config/logger";
 // Or, if using the web entrypoint:
@@ -8,11 +10,9 @@ if (!process.env.GOOGLE_VERTEX_AI_WEB_CREDENTIALS) {
     throw new Error("GOOGLE_VERTEX_AI_WEB_CREDENTIALS environment variable is not set");
 }
 
-const client = new ChatVertexAI({
+const client = new ChatGoogleGenerativeAI({
   model: "gemini-2.0-flash-001",
-  authOptions: {
-    credentials: JSON.parse(process.env.GOOGLE_VERTEX_AI_WEB_CREDENTIALS)
-  }
+    apiKey: process.env.GOOGLE_API_KEY,
 });
 
 export const query = async(userQuery: string, systemPrompt: string, responseFormat?: string) => {

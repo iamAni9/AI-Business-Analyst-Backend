@@ -13,7 +13,8 @@
   "description": "",
   "dependencies": {
     "@google-cloud/bigquery": "^8.0.0",
-    "@langchain/core": "^0.3.51",
+    "@langchain/core": "^0.3.55",
+    "@langchain/google-genai": "^0.2.8",
     "@langchain/google-vertexai": "^0.2.5",
     "@types/cors": "^2.8.17",
     "@types/csv-parse": "^1.1.12",
