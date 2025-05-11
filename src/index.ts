@@ -6,10 +6,7 @@ import dotenv from 'dotenv';
 
 import userRoutes from "./routes/userRoutes";
 import dataRoutes from "./routes/dataRoutes";
-
 import chatRoutes from "./routes/chatRoutes";
-
-
 
 // Load environment variables
 dotenv.config();
@@ -35,15 +32,19 @@ app.get('/', (req, res) => {
   res.json({ message: 'Welcome to the API' });
 });
 
- 
-
+// Health check endpoint
+app.get('/health', (req, res) => {
+  logger.info('Health check accessed');
+  res.status(200).json({ 
+    status: 'healthy',
+    timestamp: new Date().toISOString(),
+    service: 'backend-service'
+  });
+});
 
 app.use("/v1/api/users", userRoutes)
 app.use("/v1/api/data", dataRoutes)
 app.use("/v1/api/chat", chatRoutes)
-
-
-
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {

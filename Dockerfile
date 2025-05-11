@@ -29,6 +29,9 @@ RUN npm ci --only=production
 # Copy built files from builder stage
 COPY --from=builder /app/dist ./dist
 
+# Copy migrations directory
+COPY --from=builder /app/src/config/migrations ./dist/config/migrations
+
 # Create logs directory
 RUN mkdir -p logs
 
