@@ -11,8 +11,7 @@ dotenv.config();
 
 
 const pool = new Pool({
-  connectionString: process.env.POSTGRES_URI + '?sslmode=require',
-  ssl: true
+  connectionString: process.env.POSTGRES_URI,
 });
 
 // Test connection and log detailed error information
