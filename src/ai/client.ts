@@ -5,6 +5,13 @@ import logger from "../config/logger";
 
 const client = new ChatVertexAI({
   model: "gemini-2.0-flash-001",
+  authOptions: {
+    credentials: {
+      client_email: process.env.GOOGLE_CLIENT_EMAIL,
+      private_key: process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+    },
+    projectId: process.env.GOOGLE_CLOUD_PROJECT,
+  },
 });
 
 export const query = async(userQuery: string, systemPrompt: string, responseFormat?: string) => {
