@@ -1,0 +1,3 @@
+{"level":"info","message":"Attempting to connect to PostgreSQL at localhost:5432 as user admin","service":"backend-service","timestamp":"2025-05-11 11:20:33"}
+{"level":"info","message":"Server is running on port 3000","service":"backend-service","timestamp":"2025-05-11 11:20:33"}
+{"level":"info","message":"Successfully connected to PostgreSQL","service":"backend-service","timestamp":"2025-05-11 11:20:33"}

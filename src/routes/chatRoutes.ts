@@ -1,9 +1,9 @@
-import { Router, RequestHandler } from "express";
-import { responseQuery } from "../controller/chatController";
-
-const router = Router();
-
-router.post('/response', responseQuery as RequestHandler)
+import {RequestHandler, Router} from "express"
+import { responseUserQuery } from "../controllers/chatController"
+const router = Router()
 
 
-export default router;
+
+router.post("/response", responseUserQuery as RequestHandler)
+
+export default router
