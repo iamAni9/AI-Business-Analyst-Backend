@@ -19,7 +19,9 @@ const pool = new Pool({
   // Add connection timeout
   connectionTimeoutMillis: 5000,
   // Add SSL configuration if needed
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+  ssl: {
+    rejectUnauthorized: false
+  }
 });
 
 // Test connection and log detailed error information
