@@ -11,10 +11,8 @@ dotenv.config();
 
 
 const pool = new Pool({
-  connectionString: process.env.POSTGRES_URI,
-  ssl: {
-    rejectUnauthorized: false // This allows self-signed certificates
-  }
+  connectionString: process.env.POSTGRES_URI + '?sslmode=require',
+  ssl: true
 });
 
 // Test connection and log detailed error information
