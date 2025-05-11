@@ -5,37 +5,11 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 // Validate environment variables
-const requiredEnvVars = ['POSTGRES_URI'];
-const missingEnvVars = requiredEnvVars.filter(envVar => !process.env[envVar]);
 
-if (missingEnvVars.length > 0) {
-  throw new Error(`Missing required environment variables: ${missingEnvVars.join(', ')}`);
-}
 
-// Validate PostgreSQL connection string format
-const postgresUri = process.env.POSTGRES_URI!;
-if (!postgresUri.startsWith('postgres://') && !postgresUri.startsWith('postgresql://')) {
-  throw new Error('POSTGRES_URI must start with postgres:// or postgresql://');
-}
 
-// Parse connection string to extract components for logging
-const parseConnectionString = (uri: string) => {
-  try {
-    const url = new URL(uri);
-    return {
-      user: url.username,
-      host: url.hostname,
-      port: url.port,
-      database: url.pathname.slice(1),
-    };
-  } catch (error) {
-    logger.error('Invalid PostgreSQL connection string format');
-    throw new Error('Invalid PostgreSQL connection string format');
-  }
-};
 
-const connectionInfo = parseConnectionString("postgresql://admin:secret@localhost:5432/mydb");
-logger.info(`Attempting to connect to PostgreSQL at ${connectionInfo.host}:${connectionInfo.port} as user ${connectionInfo.user}`);
+
 
 const pool = new Pool({
   connectionString: "postgresql://admin:secret@localhost:5432/mydb",

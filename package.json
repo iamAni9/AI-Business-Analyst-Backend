@@ -5,9 +5,9 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "tsc",
-    "init:analysis": "ts-node src/scripts/initAnalysis.ts",
-    "init:userdata": "ts-node src/scripts/initUserData.ts",
-    "migrate": "ts-node src/scripts/migrate.ts"
+    "init:analysis": "node dist/scripts/initAnalysis.js",
+    "init:userdata": "node dist/scripts/initUserData.js",
+    "migrate": "node dist/scripts/migrate.js"
   },
   "keywords": [],
   "author": "",

@@ -35,5 +35,13 @@ RUN mkdir -p logs
 # Expose port (adjust if needed)
 EXPOSE 3000
 
-# Start the application
-CMD ["node", "dist/index.js"] 
+# Create a startup script
+RUN echo '#!/bin/sh\n\
+npm run migrate\n\
+npm run init:analysis\n\
+npm run init:userdata\n\
+node dist/index.js' > /app/start.sh && \
+chmod +x /app/start.sh
+
+# Start the application with initialization
+CMD ["/app/start.sh"] 
