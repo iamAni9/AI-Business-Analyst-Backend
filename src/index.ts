@@ -43,19 +43,6 @@ app.get('/health', (req, res) => {
   });
 });
 
-async function main(){
-  try {
-    
-    const res = await query("What is the capital of France?", "You are a helpful assistant that can answer questions about the world.")
-    logger.info(res)
-    console.log(res)
-    } catch (error) {
-    logger.error(error)
-    console.log(error)
-  }
-}
-
-// main()
 app.use("/v1/api/users", userRoutes)
 app.use("/v1/api/data", dataRoutes)
 app.use("/v1/api/chat", chatRoutes)
