@@ -11,10 +11,12 @@ dotenv.config();
 
 
 const pool = new Pool({
-  connectionString: process.env.POSTGRES_URI,
-  ssl: {
-    rejectUnauthorized: true
-  }
+  user: process.env.POSTGRES_USER,
+  database: process.env.POSTGRES_DB,
+  password: process.env.POSTGRES_PASSWORD,
+  host: process.env.POSTGRES_HOST,
+  port: parseInt(process.env.POSTGRES_PORT || "5432"),
+
 });
 
 // Test connection and log detailed error information
