@@ -5,7 +5,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "tsc",
-    "migrate": "node src/scripts/migrate.ts",
+    "migrate": "node dist/scripts/migrate.js",
     "dev": "nodemon src/index.ts"
   },
   "keywords": [],

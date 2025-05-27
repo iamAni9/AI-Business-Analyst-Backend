@@ -275,3 +275,5 @@
 {"level":"info","message":"::1 - - [27/May/2025:09:07:01 +0000] \"POST /v1/api/chat/response HTTP/1.1\" 200 4618 \"-\" \"PostmanRuntime/7.44.0\"","service":"backend-service","timestamp":"2025-05-27 14:37:01"}
 {"level":"info","message":"Server is running on localhost:port 10000","service":"backend-service","timestamp":"2025-05-27 14:54:11"}
 {"level":"info","message":"Successfully connected to PostgreSQL","service":"backend-service","timestamp":"2025-05-27 14:54:12"}
+{"level":"info","message":"Server is running on localhost:port 10000","service":"backend-service","timestamp":"2025-05-27 15:50:06"}
+{"level":"info","message":"Successfully connected to PostgreSQL","service":"backend-service","timestamp":"2025-05-27 15:50:06"}
