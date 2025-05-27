@@ -1,9 +1,9 @@
-# Build stage
-FROM node:20-slim AS builder
-
-WORKDIR /app
+###### BUILD STAGE ######
 
 # Copy package files
+FROM node:20-slim AS builder 
+
+WORKDIR /app
 COPY package*.json ./
 
 # Install ALL dependencies (including devDependencies) for building
@@ -15,12 +15,12 @@ COPY . .
 # Build TypeScript code
 RUN npm run build
 
-# Production stage
+###########################
+
+###### PRODUCTION STAGE ######
 FROM node:20-slim
 
 WORKDIR /app
-
-# Copy package files
 COPY package*.json ./
 
 # Install production dependencies only
@@ -38,22 +38,20 @@ RUN mkdir -p logs
 # Expose port (adjust if needed)
 EXPOSE 10000
 
-# Create a startup script that waits for PostgreSQL
+# Create a startup script that waits for PostgreSQL and runs migrations
 RUN echo '#!/bin/sh\n\
 echo "Waiting for PostgreSQL to be ready..."\n\
-while ! nc -z $POSTGRES_HOST $POSTGRES_PORT; do\n\
+until PGPASSWORD=$POSTGRES_PASSWORD psql -h $POSTGRES_HOST -U $POSTGRES_USER -d $POSTGRES_DB -c \"\\q\"; do\n\
+  >&2 echo \"PostgreSQL is unavailable - sleeping\"\n\
   sleep 1\n\
 done\n\
-echo "PostgreSQL is ready!"\n\
+echo \"PostgreSQL is ready!\"\n\
 \n\
-echo "Resetting database schema..."\n\
-PGPASSWORD=$POSTGRES_PASSWORD psql -h $POSTGRES_HOST -U $POSTGRES_USER -d $POSTGRES_DB -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"\n\
-\n\
-echo "Running database migrations..."\n\
+echo \"Running database migrations...\"\n\
 npm run migrate\n\
 \n\
-echo "Starting application..."\n\
-node dist/index.js' > /app/start.sh && \
+echo \"Starting application...\"\n\
+node dist/index.js' > /app/start.sh && \\
 chmod +x /app/start.sh
 
 # Install netcat and postgresql-client for the wait script

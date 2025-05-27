@@ -1,0 +1,31 @@
+{"level":"info","message":"Server is running on port 3000","service":"backend-service","timestamp":"2025-05-19 09:19:24"}
+{"level":"info","message":"Server is running on port 3000 | service=backend_service | timestamp=2025-05-19T03:52:18.731Z","service":"backend-service","timestamp":"2025-05-19 09:22:18"}
+{"level":"info","message":"Server is running on port 3000","service":"backend-service","timestamp":"2025-05-19 09:22:53"}
+{"level":"info","message":"Server is running on port 3000","service":"backend-service","timestamp":"2025-05-19 09:25:23"}
+{"level":"info","message":"Server is running on port 3000","service":"backend-service","timestamp":"2025-05-19 09:31:29"}
+{"level":"info","message":"Home route accessed","service":"backend-service","timestamp":"2025-05-19 09:36:46"}
+{"level":"info","message":"::1 - - [19/May/2025:04:06:46 +0000] \"GET / HTTP/1.1\" 200 32 \"-\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36\"","service":"backend-service","timestamp":"2025-05-19 09:36:46"}
+{"level":"info","message":"::1 - - [19/May/2025:04:06:47 +0000] \"GET /favicon.ico HTTP/1.1\" 404 150 \"http://localhost:3000/\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36\"","service":"backend-service","timestamp":"2025-05-19 09:36:47"}
+{"level":"info","message":"::1 - - [19/May/2025:04:06:52 +0000] \"GET /healt HTTP/1.1\" 404 144 \"-\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36\"","service":"backend-service","timestamp":"2025-05-19 09:36:52"}
+{"level":"info","message":"Health check accessed","service":"backend-service","timestamp":"2025-05-19 09:36:56"}
+{"level":"info","message":"::1 - - [19/May/2025:04:06:56 +0000] \"GET /health HTTP/1.1\" 200 87 \"-\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36\"","service":"backend-service","timestamp":"2025-05-19 09:36:56"}
+{"level":"info","message":"Server is running on localhost:port 3000","service":"backend-service","timestamp":"2025-05-19 09:38:29"}
+{"level":"info","message":"Server is running on localhost:port 3000","service":"backend-service","timestamp":"2025-05-19 10:12:20"}
+{"error":"SASL: SCRAM-SERVER-FIRST-MESSAGE: client password must be a string","level":"error","message":"Error connecting to PostgreSQL:","service":"backend-service","timestamp":"2025-05-19 10:12:21"}
+{"level":"info","message":"Server is running on localhost:port 3000","service":"backend-service","timestamp":"2025-05-19 10:15:50"}
+{"error":"SASL: SCRAM-SERVER-FIRST-MESSAGE: client password must be a string","level":"error","message":"Error connecting to PostgreSQL:","service":"backend-service","timestamp":"2025-05-19 10:15:50"}
+{"level":"info","message":"Server is running on localhost:port 3000","service":"backend-service","timestamp":"2025-05-19 15:08:26"}
+{"level":"info","message":"Successfully connected to PostgreSQL","service":"backend-service","timestamp":"2025-05-19 15:08:28"}
+{"level":"info","message":"::1 - - [19/May/2025:09:39:16 +0000] \"POST / HTTP/1.1\" 404 140 \"-\" \"PostmanRuntime/7.43.4\"","service":"backend-service","timestamp":"2025-05-19 15:09:16"}
+{"level":"info","message":"::1 - - [19/May/2025:09:39:25 +0000] \"POST / HTTP/1.1\" 404 140 \"-\" \"PostmanRuntime/7.43.4\"","service":"backend-service","timestamp":"2025-05-19 15:09:25"}
+{"level":"info","message":"Home route accessed","service":"backend-service","timestamp":"2025-05-19 15:09:39"}
+{"level":"info","message":"::1 - - [19/May/2025:09:39:39 +0000] \"GET / HTTP/1.1\" 304 - \"-\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36\"","service":"backend-service","timestamp":"2025-05-19 15:09:39"}
+{"level":"info","message":"Home route accessed","service":"backend-service","timestamp":"2025-05-19 15:09:48"}
+{"level":"info","message":"::1 - - [19/May/2025:09:39:48 +0000] \"GET / HTTP/1.1\" 200 32 \"-\" \"PostmanRuntime/7.43.4\"","service":"backend-service","timestamp":"2025-05-19 15:09:48"}
+{"level":"info","message":"Health check accessed","service":"backend-service","timestamp":"2025-05-19 15:09:58"}
+{"level":"info","message":"::1 - - [19/May/2025:09:39:58 +0000] \"GET /health HTTP/1.1\" 200 87 \"-\" \"PostmanRuntime/7.43.4\"","service":"backend-service","timestamp":"2025-05-19 15:09:58"}
+{"level":"info","message":"::1 - - [19/May/2025:09:41:00 +0000] \"POST //v1/api/users/sign-in HTTP/1.1\" 404 161 \"-\" \"PostmanRuntime/7.43.4\"","service":"backend-service","timestamp":"2025-05-19 15:11:00"}
+{"level":"info","message":"::1 - - [19/May/2025:09:41:12 +0000] \"POST //v1/api/users/sign-up HTTP/1.1\" 404 161 \"-\" \"PostmanRuntime/7.43.4\"","service":"backend-service","timestamp":"2025-05-19 15:11:12"}
+{"level":"info","message":"User created successfully with id: db5cfa76-4412-4bb2-8f66-678b821347d9","service":"backend-service","timestamp":"2025-05-19 15:11:36"}
+{"level":"info","message":"::1 - - [19/May/2025:09:41:37 +0000] \"POST /v1/api/users/sign-up HTTP/1.1\" 200 54 \"-\" \"PostmanRuntime/7.43.4\"","service":"backend-service","timestamp":"2025-05-19 15:11:37"}
+{"level":"info","message":"::1 - - [19/May/2025:09:43:20 +0000] \"POST /v1/api/users/sign-in HTTP/1.1\" 200 136 \"-\" \"PostmanRuntime/7.43.4\"","service":"backend-service","timestamp":"2025-05-19 15:13:20"}

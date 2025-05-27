@@ -3,11 +3,14 @@ version: '3.8'
 services:
   app:
     build: .
+    container_name: node_backend
+    env_file:
+      - .env
     ports:
       - "10000:10000"
-    environment:
-      - POSTGRES_URI=postgresql://postgres:iD%3Fb7bQJzwZ%29w%2B8@db.civtwzudfloonjsopdso.supabase.co:5432/postgres?sslmode=require
-      - NODE_ENV=production
+    # environment:
+    #   - POSTGRES_URI=postgresql://postgres:iD%3Fb7bQJzwZ%29w%2B8@db.civtwzudfloonjsopdso.supabase.co:5432/postgres?sslmode=require
+    #   - NODE_ENV=production
 
 volumes:
   postgres_data: 

@@ -1,0 +1,16 @@
+id,name,,department,designation,salary,,performance_score,,status
+1,Alice Smith,alice@example.com,HR,Manager,60000,15-01-2020,4.5,New York,Active
+2,Bob Johnson,bob@example.com,IT,Developer,75000,22-07-2019,4.2,San Francisco,Active
+3,Carol Lee,carol@example.com,Sales,Executive,50000,10-03-2021,3.9,Los Angeles,Inactive
+4,David Kim,david@example.com,IT,Analyst,67000,03-11-2018,4.1,Austin,Active
+5,Eva Brown,eva@example.com,Marketing,Executive,52000,18-06-2022,4.3,Seattle,Active
+6,Frank Hall,frank@example.com,Finance,Manager,85000,25-09-2017,4.6,Chicago,Active
+7,Grace Clark,grace@example.com,Sales,Manager,64000,30-05-2019,3.8,Miami,Inactive
+8,Hank Young,hank@example.com,IT,Developer,72000,12-12-2020,4,Dallas,Active
+9,Ivy Lewis,ivy@example.com,HR,Coordinator,48000,11-02-2023,4.7,Denver,Active
+10,Jack White,jack@example.com,Finance,Analyst,69000,05-09-2021,3.6,Boston,Active
+11,Kate Adams,kate@example.com,Marketing,Manager,70000,14-03-2018,4.4,Atlanta,Active
+12,Luke Green,luke@example.com,IT,Developer,73000,28-10-2020,4.1,Houston,Active
+13,Mia Scott,mia@example.com,Sales,Executive,51000,20-01-2022,3.7,Phoenix,Inactive
+14,Noah Baker,noah@example.com,HR,Manager,61000,09-08-2016,4.2,Orlando,Active
+15,Olivia King,olivia@example.com,Finance,Executive,57000,13-11-2021,4,San Diego,Active
