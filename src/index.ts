@@ -19,8 +19,21 @@ const app = express();
 
 // Middlewares
 app.use(cors());
-app.use(express.json());
 app.use(morgan('combined', { stream })); // Request logging middleware
+
+app.use(express.json());
+// Handle malformed JSON errors
+app.use(((err: any, req: Request, res: Response, next: NextFunction) => {
+  if (err instanceof SyntaxError && 'body' in err && (err as any).status === 400) {
+    logger.error('Malformed JSON in request', { error: err.message });
+    return res.status(400).json({
+      success: false,
+      message: 'Malformed JSON in request body',
+    });
+  }
+  next(err);
+}) as express.ErrorRequestHandler);
+
 
 // Error handling middleware
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {

@@ -37,8 +37,9 @@ const googleAuth = async (req: Request, res: Response) => {
         } catch (err) {
             logger.error("Failed to exchange code for tokens:", err);
             return res.status(401).json({
-                success: false,
-                message: "Invalid authorization code"
+                success : false,
+                message : "Invalid authorization code",
+                error : err
             });
         }
 
@@ -83,8 +84,9 @@ const googleAuth = async (req: Request, res: Response) => {
         } catch (dbError) {
             logger.error("Database error:", dbError);
             return res.status(500).json({
-                success: false,
-                message: "Database operation failed"
+                success : false,
+                message : "Database operation failed",
+                error: dbError
             });
         }
 
@@ -93,6 +95,7 @@ const googleAuth = async (req: Request, res: Response) => {
         return res.status(500).json({
             success: false,
             message: "Internal server error during Google authentication",
+            error: error
             // code: access_token
         });
     }
@@ -159,11 +162,11 @@ const signInUser = async (req: Request, res: Response) => {
 const signUpUser = async (req: Request, res: Response) => {
     try {
         const { name, email, password } = req.body
-        if (!email || !password) {
-            logger.error("Email and password are required")
+        if (!name || !email || !password) {
+            logger.error("Name, email and password are required")
             return res.status(400).json({ 
                 success: false, 
-                message: "Email and password are required"
+                message: "Name, email and password are required"
             })
         }
 
@@ -214,7 +217,8 @@ const signUpUser = async (req: Request, res: Response) => {
         logger.error(`Sign up error: ${error.message}`)
         res.status(500).json({ 
             success: false,
-            message: "Internal server error" 
+            message: "Internal server error", 
+            error: error
         })
     }
 }
@@ -246,7 +250,8 @@ const getUserData = async (req: Request, res: Response) => {
         logger.error(`Get user data error: ${error.message}`)
         res.status(500).json({ 
             success: false,
-            message: "Internal server error" 
+            message: "Internal server error",
+            error: error
         })
     }
 }
@@ -267,7 +272,8 @@ const checkUser = async (req: Request, res: Response) => {
         logger.error(`Get user data error: ${error.message}`)
         res.status(500).json({ 
             success: false,
-            message: "Internal server error" 
+            message: "Internal server error",
+            error: error
         })
     }
 }
