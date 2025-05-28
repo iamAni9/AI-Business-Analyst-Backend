@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS users (
 -- Analysis data table
 CREATE TABLE IF NOT EXISTS analysis_data (
     id UUID PRIMARY KEY,
-    table_id VARCHAR(255) NOT NULL,
+    table_name VARCHAR(255) NOT NULL,
     table_description TEXT NOT NULL,
     schema JSONB NOT NULL,
     analysis JSONB NOT NULL,
