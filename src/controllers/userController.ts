@@ -12,16 +12,22 @@ import axios from 'axios';
 // const client = new OAuth2Client(google_client_id, google_client_secret, 'postmessage');
 
 const googleAuth = async (req: Request, res: Response) => {
-    const { access_token  } = req.body;
+    // const { access_token  } = req.body;
     try {
         
-        if (!access_token ) { 
+        if (
+            !req.body || 
+            typeof req.body !== 'object' || 
+            !req.body.access_token
+        ) {
             logger.error("No access_token provided");
             return res.status(400).json({ 
                 success: false, 
                 message: "access_token is required" 
             });
         }
+
+        const { access_token } = req.body;
 
         console.log("Received Google access_token:", access_token);
 
@@ -103,14 +109,14 @@ const googleAuth = async (req: Request, res: Response) => {
 
 const signInUser = async (req: Request, res: Response) => {
     try {
-        const { email, password } = req.body
-        if (!email || !password) {
-            logger.error("Email and password are required")
+        if (!req.body || typeof req.body !== 'object' || !req.body.email || !req.body.password) {
+            logger.error("Email and password are required");
             return res.status(400).json({ 
                 success: false, 
                 message: "Email and password are required"
-            })
+            });
         }
+        const { email, password } = req.body;
 
         const query = `
             SELECT *
@@ -161,14 +167,21 @@ const signInUser = async (req: Request, res: Response) => {
 
 const signUpUser = async (req: Request, res: Response) => {
     try {
-        const { name, email, password } = req.body
-        if (!name || !email || !password) {
-            logger.error("Name, email and password are required")
+        if (
+            !req.body || 
+            typeof req.body !== 'object' || 
+            !req.body.name || 
+            !req.body.email || 
+            !req.body.password
+        ) {
+            logger.error("Name, email and password are required");
             return res.status(400).json({ 
                 success: false, 
                 message: "Name, email and password are required"
-            })
+            });
         }
+
+        const { name, email, password } = req.body;
 
         // Check if user exists
         const checkQuery = `
@@ -225,6 +238,17 @@ const signUpUser = async (req: Request, res: Response) => {
 
 const getUserData = async (req: Request, res: Response) => {
     try {
+        if (
+            !req.body || 
+            typeof req.body !== 'object' || 
+            !req.body.email
+        ) {
+            logger.error("email is required");
+            return res.status(400).json({ 
+                success: false, 
+                message: "email is required for finding user"
+            });
+        }
         const { email } = req.body
         const query = `
             SELECT *
@@ -264,9 +288,13 @@ const checkUser = async (req: Request, res: Response) => {
                 message: 'Not logged in' 
             });
         }
+        const name = req.session.user.name;
+        const email = req.session.user.email;
         res.json({ 
             success: true, 
-            message: "User already logged in" 
+            message: "User already logged in",
+            name: name,
+            email: email
         });
     } catch (error: any) {
         logger.error(`Get user data error: ${error.message}`)

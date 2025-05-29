@@ -1,7 +1,7 @@
 import fs from 'fs';
 import pool from '../config/postgres';
 import logger from '../config/logger';
-import { SAMPLE_ROW_LIMIT } from '../config/constants';
+import { SAMPLE_ROW_LIMIT, DATA_TIME_FORMAT } from '../config/constants';
 import { v4 as uuidv4 } from 'uuid';
 import { queueManager } from './queueManager';
 // import { parse } from 'csv-parse';
@@ -168,28 +168,12 @@ const typecastValue = (value: string | null, type: string): any => {
     case 'timestamp':
     case 'timestamp without time zone':
     case 'timestamp with time zone': {
-      const formats = [
-        'YYYY-MM-DD',
-        'MM-DD-YYYY',
-        'DD-MM-YYYY',
-        'YYYY/MM/DD',
-        'MM/DD/YYYY',
-        'DD/MM/YYYY',
-        'YYYY-MM-DD HH:mm:ss',
-        'MM-DD-YYYY HH:mm:ss',
-        'DD-MM-YYYY HH:mm:ss',
-        'YYYY/MM/DD HH:mm:ss',
-        'MM/DD/YYYY HH:mm:ss',
-        'DD/MM/YYYY HH:mm:ss',
-        'HH:mm',
-        'HH:mm:ss',
-      ];
+      const formats = DATA_TIME_FORMAT;
 
       for (const format of formats) {
         const parsed = dayjs(value, format, true); // strict parsing
         if (parsed.isValid()) return parsed.toDate(); // convert to JS Date
       }
-
       return null; // Unrecognized format
     }
 

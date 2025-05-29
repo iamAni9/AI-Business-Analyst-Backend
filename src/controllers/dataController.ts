@@ -3,6 +3,7 @@ import pool from "../config/postgres";
 import logger from "../config/logger";
 import { v4 as uuidv4 } from 'uuid';
 import { query } from "../ai/client";
+import { DATA_TIME_FORMAT } from "../config/constants";
 
 const getAnalysis = async(table_name: string, sampleRows: any[]) => {
     logger.info(`Starting analysis for table: ${table_name}`);
@@ -114,8 +115,12 @@ const getAnalysis = async(table_name: string, sampleRows: any[]) => {
         - The number of **columns** in the schema should match the number of **columns in the sample rows**.
         - Preserve the original column order as shown in the sample rows.
         - If the sampleRows include column names, update the contain_column with YES otherwise NO only. 
-        - If any data value appears to be a date or time (e.g., formats like MM-DD-YYYY, DD/MM/YYYY, YYYY-MM-DD, HH:MM, or HH:MM:SS), assign the appropriate PostgreSQL type (DATE, TIME, or TIMESTAMP) to that column.
-        
+        - For data type inference, use the provided list of PostgreSQL date/time formats below and assign appropriate PostgreSQL types: DATE, TIME, TIMESTAMP, TIMESTAMPTZ.
+        - If a column contains multiple date/time formats, choose the most general type to cover all data (e.g., TIMESTAMPTZ over DATE).
+    
+    PostgreSQL Date/Time Formats Reference (to use for type inference):
+    ${DATA_TIME_FORMAT.join(', ')}
+    
     Response Format:
     ${responseFormat}
 

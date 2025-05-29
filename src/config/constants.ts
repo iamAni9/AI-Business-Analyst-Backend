@@ -15,3 +15,53 @@ export const SAMPLE_ROW_LIMIT = 10;
 export const MAX_RETRY_ATTEMPTS = 3;
 export const MAX_EVAL_ITERATION = 3;
 export const INITIAL_RETRY_DELAY = 1000; // 1 second
+
+// Date and Time format
+export const DATA_TIME_FORMAT = [
+    // Date only
+  'YYYY-MM-DD',
+  'MM-DD-YYYY',
+  'DD-MM-YYYY',
+  'YYYY/MM/DD',
+  'MM/DD/YYYY',
+  'DD/MM/YYYY',
+
+  // Time only
+  'HH:mm',
+  'HH:mm:ss',
+  'HH:mm:ss.SSS',     // milliseconds
+  'HH:mm:ss.SSSSSS',  // microseconds 
+
+  // Date + Time (no timezone)
+  'YYYY-MM-DD HH:mm:ss',
+  'YYYY-MM-DD HH:mm:ss.SSS',
+  'YYYY-MM-DD HH:mm:ss.SSSSSS',
+
+  'MM-DD-YYYY HH:mm:ss',
+  'MM-DD-YYYY HH:mm:ss.SSS',
+
+  'DD-MM-YYYY HH:mm:ss',
+  'DD-MM-YYYY HH:mm:ss.SSS',
+
+  'YYYY/MM/DD HH:mm:ss',
+  'YYYY/MM/DD HH:mm:ss.SSS',
+
+  'MM/DD/YYYY HH:mm:ss',
+  'MM/DD/YYYY HH:mm:ss.SSS',
+
+  'DD/MM/YYYY HH:mm:ss',
+  'DD/MM/YYYY HH:mm:ss.SSS',
+
+  // Date + Time + UTC or other TZ
+  'YYYY-MM-DD HH:mm:ss [UTC]',
+  'YYYY-MM-DD HH:mm:ss.SSS [UTC]',
+  'YYYY-MM-DD HH:mm:ss.SSSSSS [UTC]',
+
+  'YYYY-MM-DD HH:mm:ss Z',           // e.g., +00:00
+  'YYYY-MM-DD HH:mm:ss.SSS Z',
+  'YYYY-MM-DD HH:mm:ss.SSSSSS Z',
+
+  'YYYY-MM-DDTHH:mm:ssZ',            // ISO 8601 basic
+  'YYYY-MM-DDTHH:mm:ss.SSSZ',
+  'YYYY-MM-DDTHH:mm:ss.SSSSSSZ'    
+];
