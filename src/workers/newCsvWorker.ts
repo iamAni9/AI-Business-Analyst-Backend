@@ -187,7 +187,10 @@ const insertBatchWithSchema = async (
   schema: TableSchema
 ): Promise<void> => {
   const columns = schema.columns.map(col => col.column_name);
-  const values: any[] = batch.map(row => columns.map(col => row[col]));
+  // const values: any[] = batch.map(row => columns.map(col => row[col]));
+  const values: any[] = batch.map(row =>
+    columns.map(col => row[col] !== undefined ? row[col] : null)
+  );
 
   const valuePlaceholders = batch.map((_, i) => {
     const offset = i * columns.length;

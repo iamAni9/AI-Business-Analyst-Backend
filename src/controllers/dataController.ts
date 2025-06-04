@@ -118,6 +118,12 @@ const getAnalysis = async(table_name: string, sampleRows: any[]) => {
         - For data type inference, use the provided list of PostgreSQL date/time formats below and assign appropriate PostgreSQL types: DATE, TIME, TIMESTAMP, TIMESTAMPTZ.
         - If a column contains multiple date/time formats, choose the most general type to cover all data (e.g., TIMESTAMPTZ over DATE).
     
+    Strictly respond ONLY in VALID JSON format.
+    - DO NOT include markdown (\`\`\`)
+    - DOUBLE-QUOTE all property names and string values
+    - Every string must be double-quoted and terminated properly
+    - DO NOT include comments inside JSON
+
     PostgreSQL Date/Time Formats Reference (to use for type inference):
     ${DATA_TIME_FORMAT.join(', ')}
     
@@ -133,6 +139,7 @@ const getAnalysis = async(table_name: string, sampleRows: any[]) => {
         logger.info('Generating AI analysis...');
         const aiAnalysis = await query(userQuery, systemPrompt);
         
+        // logger.info("AI ANALYSIS: ", aiAnalysis);
         logger.info('Parsing AI response...');
         // Clean the response by removing markdown formatting and ensuring valid JSON
         let cleanedResponse = aiAnalysis.toString()

@@ -10,7 +10,8 @@ CREATE TABLE IF NOT EXISTS users (
 
 -- Analysis data table
 CREATE TABLE IF NOT EXISTS analysis_data (
-    id UUID PRIMARY KEY,
+    -- id UUID PRIMARY KEY,
+    id UUID NOT NULL,       
     table_name VARCHAR(255) NOT NULL,
     table_description TEXT NOT NULL,
     schema JSONB NOT NULL,
@@ -21,6 +22,12 @@ CREATE TABLE IF NOT EXISTS analysis_data (
     data_relationships JSONB NOT NULL,
     data_trends JSONB NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
+
+     -- Composite primary key
+    CONSTRAINT analysis_data_pkey PRIMARY KEY (id, table_name),
+
+    -- Foreign key constraint 
+    CONSTRAINT fk_user_id FOREIGN KEY (id) REFERENCES users(id) ON DELETE CASCADE
 );
 
 -- Create indexes
