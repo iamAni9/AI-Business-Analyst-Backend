@@ -40,7 +40,7 @@ RUN apt-get update && apt-get install -y netcat-traditional postgresql-client &&
 # Create a startup script that waits for PostgreSQL and runs migrations
 RUN echo '#!/bin/sh\n\
 echo "Waiting for PostgreSQL to be ready..."\n\
-until PGPASSWORD=$$POSTGRES_PASSWORD psql -h $$POSTGRES_HOST -U $$POSTGRES_USER -d $$POSTGRES_DB -c "\\q"; do\n\
+until PGPASSWORD=$POSTGRES_PASSWORD psql -h $POSTGRES_HOST -U $POSTGRES_USER -d $POSTGRES_DB -c "\\q"; do\n\
   >&2 echo "PostgreSQL is unavailable - sleeping"\n\
   sleep 1\n\
 done\n\
