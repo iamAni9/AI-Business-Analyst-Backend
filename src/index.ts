@@ -18,7 +18,10 @@ dotenv.config();
 const app = express();
 
 // Middlewares
-app.use(cors());
+app.use(cors({
+  origin: 'http://localhost:5173', // frontend origin
+  credentials: true
+}));
 app.use(morgan('combined', { stream })); // Request logging middleware
 
 app.use(express.json());

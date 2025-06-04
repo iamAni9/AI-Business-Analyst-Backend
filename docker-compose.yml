@@ -8,9 +8,12 @@ services:
       - .env
     ports:
       - "10000:10000"
+    depends_on:
+      - redis
+    restart: unless-stopped
+    # You can define environment variables here or just use .env
     # environment:
-    #   - POSTGRES_URI=postgresql://postgres:iD%3Fb7bQJzwZ%29w%2B8@db.civtwzudfloonjsopdso.supabase.co:5432/postgres?sslmode=require
     #   - NODE_ENV=production
 
 volumes:
-  postgres_data: 
+  postgres_data:  

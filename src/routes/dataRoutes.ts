@@ -1,10 +1,11 @@
-import { Router, Request, Response, RequestHandler } from "express";
+import { Router, Request, Response } from "express";
 import logger from "../config/logger";
 import upload from "../middlewares/multer";
-import { v4 as uuidv4 } from 'uuid';
-import { generateAnalysis } from "../controllers/dataController";
-import { queueManager } from '../workers/queueManager';
+// import { queueManager } from '../workers/queueManager';
 import pool from '../config/postgres';
+// import { v4 as uuidv4 } from 'uuid';
+import { csvQueue } from '../workers/bullQueue';
+import { getJobStatus } from '../workers/jobStatus';
 
 const router = Router();
 
@@ -94,13 +95,24 @@ router.post("/upload-csv", upload.array('files', 10), async (req: Request, res: 
         logger.info('Processing file:', { originalName: file.originalname, tableName, filePath });
 
         // Sending job to queue for async processing (LLM, schema, DB, final_schema_and_metadata)
-        await queueManager.addJob({
+        // await queueManager.addJob({
+        //   filePath,
+        //   tableName,
+        //   userid,
+        //   email,
+        //   uploadId: uniqueTableId,
+        //   originalFileName: file.originalname
+        // });
+
+        await csvQueue.add('csv-processing', {
           filePath,
           tableName,
           userid,
           email,
           uploadId: uniqueTableId,
           originalFileName: file.originalname
+        }, {
+          jobId: uniqueTableId  // Custom ID as the BullMQ job ID
         });
 
         uploadResults.push({
@@ -136,75 +148,29 @@ router.post("/upload-csv", upload.array('files', 10), async (req: Request, res: 
 
 
 // Enhanced endpoint to check upload status 
-router.get("/upload-status/:uploadId", (req: Request, res: Response) => {
-  const { uploadId } = req.params;
-  const status = queueManager.getJobStatus(uploadId);
+router.post("/upload-status/", (req: Request, res: Response) => {
+  const { uploadId } = req.body;
   
-  if (!status) {
-    res.status(404).json({ 
-      success: false, 
-      message: 'Upload ID not found',
-      uploadId
-    });
-    return;
-  }
+  setImmediate(async () => {
+    const status = await getJobStatus(uploadId);
+    // const status = await queueManager.getJobStatus(uploadId);
+    
+    if (!status) {
+      res.status(404).json({ 
+        success: false, 
+        message: 'Upload ID not found',
+        uploadId
+      });
+      return;
+    }
 
-  res.json({ 
-    success: true, 
-    uploadId, 
-    ...status
+    res.json({ 
+      success: true, 
+      uploadId, 
+      ...status
+    });
   });
 });
-
-
-
-// ----------I am not using this route---------------
-// Enhanced generate-analysis endpoint
-// router.post("/generate-analysis", async (req: Request, res: Response) => {
-//   try {
-//     const { table_name, email } = req.body;
-    
-//     if (!table_name || !email) {
-//       res.status(400).json({
-//         success: false,
-//         message: 'Table name and email are required'
-//       });
-//       return;
-//     }
-
-//     // Check if user exists
-//     const userExists = await checkUserExists(email);
-//     if (!userExists) {
-//       res.status(404).json({
-//         success: false,
-//         message: 'User not found. Please register first.'
-//       });
-//       return;
-//     }
-
-//     // Check if analysis already exists
-//     const existingAnalysis = await getAnalysisData(table_name);
-//     if (existingAnalysis) {
-//       logger.info('Using existing analysis for table:', table_name);
-//       res.status(200).json({
-//         success: true,
-//         message: 'Analysis retrieved successfully',
-//         analysis: existingAnalysis
-//       });
-//       return;
-//     }
-
-//     // Generate new analysis
-//     // await generateAnalysis(req, res);
-//   } catch (error) {
-//     logger.error('Error in generate-analysis:', error);
-//     res.status(500).json({
-//       success: false,
-//       message: 'Error generating analysis',
-//       error: error instanceof Error ? error.message : 'Unknown error'
-//     });
-//   }
-// });
 
 export default router;
 

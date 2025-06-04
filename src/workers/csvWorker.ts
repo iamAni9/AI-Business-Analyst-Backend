@@ -2,11 +2,8 @@ import fs from 'fs';
 import pool from '../config/postgres';
 import logger from '../config/logger';
 import { SAMPLE_ROW_LIMIT, DATA_TIME_FORMAT } from '../config/constants';
-import { v4 as uuidv4 } from 'uuid';
 import { queueManager } from './queueManager';
-// import { parse } from 'csv-parse';
 import { generateAnalysis } from '../controllers/dataController';
-// import csvParser from 'csv-parser'
 import readline from 'readline';
 import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
@@ -42,59 +39,6 @@ const updateProgress = (uploadId: string, progress: number) => {
     });
   }
 };
-
-// const getSampleRows = (filePath: string, sampleSize: number): Promise<any[]> => {
-//   return new Promise((resolve, reject) => {
-//     const rows: any[] = [];
-//     const stream = fs.createReadStream(filePath)
-//       .pipe(csvParser())
-//       .on('data', (row) => {
-//         if (rows.length < sampleSize) {
-//           rows.push(row);
-//         }
-//         // Setting a limit 
-//         if (rows.length === sampleSize) {
-//           stream.destroy(); 
-//         }
-//       })
-//       .on('close', () => resolve(rows))
-//       .on('end', () => resolve(rows))
-//       .on('error', (error) => reject(error));
-//   });
-// };
-
-// const getSampleRows = (filePath: string, sampleSize: number): Promise<Record<string, string>> => {
-//   return new Promise((resolve, reject) => {
-//     const rows: Record<string, string> = {};
-//     let isHeaderCaptured = false;
-//     let rowCount = 0;
-
-//     const stream = fs.createReadStream(filePath)
-//       .pipe(csvParser())
-//       .on('headers', (headers: string[]) => {
-//         if (!isHeaderCaptured) {
-//           // Replacing empty headers (just in case) with "null"
-//           const cleanedHeaders = headers.map(h => h.trim() === '' ? 'null' : h);
-//           rows[`row${rowCount}`] = cleanedHeaders.join(', ');
-//           isHeaderCaptured = true;
-//           rowCount++;
-//         }
-//       })
-//       .on('data', (row) => {
-//         if (rowCount < sampleSize + 1) {
-//           const csvLine = Object.values(row).join(', ');
-//           rows[`row${rowCount}`] = csvLine;
-//           rowCount++;
-//         }
-//         if (rowCount === sampleSize) {
-//           stream.destroy();
-//         }
-//       })
-//       .on('close', () => resolve(rows))
-//       .on('end', () => resolve(rows))
-//       .on('error', (error) => reject(error));
-//   });
-// };
 
 const getSampleRows = (filePath: string, sampleSize: number): Promise<Record<string, string>> => {
   return new Promise((resolve, reject) => {
@@ -181,71 +125,6 @@ const typecastValue = (value: string | null, type: string): any => {
       return value;
   }
 };
-
-
-// Updated importCSVData with schema validation and data refinement
-// const addDataIntoTableFromCSV = async (
-//   filePath: string,
-//   tableName: string,
-//   schema: TableSchema,
-//   contain_columns: string
-// ): Promise<void> => {
-//   return new Promise((resolve, reject) => {
-//     const rows: any[] = [];
-//     const batchSize = 1000;
-//     const columns = schema.columns.map(c => c.column_name);
-//     let isFirstRow = true;
-
-//     const parser = parse({
-//       relax_column_count: true,
-//       skip_empty_lines: true,
-//     });
-
-//     const stream = fs.createReadStream(filePath).pipe(parser);
-
-//     stream.on('data', async (record: string[]) => {
-//       try {
-//         if (contain_columns === "YES" && isFirstRow) {
-//           isFirstRow = false;
-//           return; // Skip header
-//         }
-
-//         isFirstRow = false;
-
-//         // Fill missing values with null
-//         const padded = [...record];
-//         while (padded.length < columns.length) padded.push('');
-
-//         const row: Record<string, any> = {};
-//         columns.forEach((col, i) => {
-//           row[col] = padded[i]?.trim() || null;
-//         });
-
-//         rows.push(row);
-
-//         if (rows.length >= batchSize) {
-//           stream.pause();
-//           await insertBatchWithSchema(rows.splice(0, batchSize), tableName, schema);
-//           stream.resume();
-//         }
-//       } catch (err) {
-//         reject(err);
-//       }
-//     });
-//     stream.on('end', async () => {
-//       try {
-//         if (rows.length > 0) {
-//           await insertBatchWithSchema(rows, tableName, schema);
-//         }
-//         resolve();
-//       } catch (err) {
-//         reject(err);
-//       }
-//     });
-
-//     stream.on('error', reject);
-//   });
-// };
 
 const addDataIntoTableFromCSV = async (
   filePath: string,
@@ -346,6 +225,7 @@ export const processCSV = async (jobData: CSVJobData): Promise<void> => {
     const sampleRows = await getSampleRows(filePath, SAMPLE_ROW_LIMIT);
     logger.info("Sample Rows: ", sampleRows);
 
+    updateProgress(uploadId, 40);
     const analysis = await generateAnalysis(userid, tableName, Object.values(sampleRows));
     if (!analysis) {
       throw new Error('generateAnalysis failed or returned undefined');
@@ -354,7 +234,7 @@ export const processCSV = async (jobData: CSVJobData): Promise<void> => {
 
     logger.info("SCHEMA: ", schema);  
     logger.info("COLUMN: ", contain_columns);  
-    updateProgress(uploadId, 40);
+    updateProgress(uploadId, 50);
 
     //Creating table 
     await createTableFromSchema(tableName, schema);
