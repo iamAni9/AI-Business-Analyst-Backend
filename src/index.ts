@@ -16,21 +16,20 @@ import chatRoutes from "./routes/chatRoutes";
 dotenv.config();
 
 const app = express();
-
 app.set('trust proxy', 1);
 
 // Middlewares
-const allowedOrigins = process.env.FRONTEND_ORIGIN?.split(',') || [];
+const allowedOrigins = process.env.FRONTEND_ORIGIN?.split(',').map(origin => origin.trim()) || [];
 app.use(cors({
-   origin: (origin, callback) => {
+  origin: (origin, callback) => {
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
+      logger.error(`CORS blocked: ${origin} not in ${allowedOrigins}`);
       callback(new Error('Not allowed by CORS'));
     }
   },
   credentials: true,
-  exposedHeaders: ['set-cookie']
 }));
 
 // Session middleware 
@@ -41,14 +40,15 @@ app.use(session({
     pool: pool,
     createTableIfMissing: true, 
   }),
-  secret: 'abcd-1234-efgh-5678',  
+  secret: process.env.SESSION_SECRET || 'fallback-secret',  
   resave: false,
   saveUninitialized: false,
   cookie: {
     httpOnly: true,
-    sameSite: process.env.NODE_ENV === 'production' ? "none" : "lax", // Required for cross-origin  
-    secure: process.env.NODE_ENV === 'production', 
-    maxAge: SESSION_EXPIRY
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+    secure: process.env.NODE_ENV === 'production',
+    maxAge: SESSION_EXPIRY,
+    domain: process.env.NODE_ENV === 'production' ? '.onrender.com' : undefined // 👈 Critical addition
   }
 }));
 
