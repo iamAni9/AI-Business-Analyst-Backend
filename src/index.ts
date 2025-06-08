@@ -48,8 +48,7 @@ app.use(session({
     sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
     secure: process.env.NODE_ENV === 'production',
     maxAge: SESSION_EXPIRY,
-    domain: process.env.NODE_ENV === 'production' ? '.onrender.com' : undefined // 👈 Critical addition
-  }
+   }
 }));
 
 app.use(morgan('combined', { stream })); // Request logging middleware
