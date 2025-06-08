@@ -1,8 +1,8 @@
 import fs from 'fs';
 import pool from '../config/postgres';
 import logger from '../config/logger';
-import { SAMPLE_ROW_LIMIT, DATA_TIME_FORMAT } from '../config/constants';
-import { generateAnalysis } from '../controllers/dataController';
+import { SAMPLE_ROW_LIMIT, DATA_TIME_FORMAT, CSV_DATA_INSERT_BATCH_SIZE } from '../config/constants';
+import { generateTableSchema } from '../controllers/dataController';
 import readline from 'readline';
 import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
@@ -124,7 +124,7 @@ const addDataIntoTableFromCSV = async (
 ): Promise<void> => {
   return new Promise((resolve, reject) => {
     const rows: Record<string, any>[] = [];
-    const batchSize = 1000;
+    // const batchSize = 1000;
     let isFirstRow = true;
 
     const rl = readline.createInterface({
@@ -154,9 +154,9 @@ const addDataIntoTableFromCSV = async (
 
         rows.push(rowObject);
 
-        if (rows.length >= batchSize) {
+        if (rows.length >= CSV_DATA_INSERT_BATCH_SIZE) {
           rl.pause(); // pause while inserting
-          await insertBatchWithSchema(rows.splice(0, batchSize), tableName, schema);
+          await insertBatchWithSchema(rows.splice(0, CSV_DATA_INSERT_BATCH_SIZE), tableName, schema);
           rl.resume(); // resume after insert
         }
       } catch (err) {
@@ -191,6 +191,21 @@ const insertBatchWithSchema = async (
   const values: any[] = batch.map(row =>
     columns.map(col => row[col] !== undefined ? row[col] : null)
   );
+  
+  const flatValues = values.flat();
+  
+  logger.info(`Inserting ${batch.length} rows with ${columns.length} columns each`);
+  logger.info(`Total parameters: ${flatValues.length}`);
+
+  if (flatValues.length === 0 || batch.length === 0) {
+    console.warn(`Skipping insert into ${tableName} — no values to insert.`);
+    return;
+  }
+  
+  const expectedParams = batch.length * columns.length;
+  if (flatValues.length !== expectedParams) {
+    throw new Error(`Parameter count mismatch. Expected ${expectedParams}, got ${flatValues.length}`);
+  }
 
   const valuePlaceholders = batch.map((_, i) => {
     const offset = i * columns.length;
@@ -198,12 +213,14 @@ const insertBatchWithSchema = async (
     return `(${rowPlaceholders.join(', ')})`;
   }).join(', ');
 
+  // logger.info("Place holder: ",valuePlaceholders);
+
   const query = `
     INSERT INTO "${tableName}" (${columns.map(col => `"${col}"`).join(', ')})
     VALUES ${valuePlaceholders};
   `;
 
-  await pool.query(query, values.flat());
+  await pool.query(query, flatValues);
 };
 
 const connection = new Redis(process.env.REDIS_URL!, {
@@ -211,16 +228,20 @@ const connection = new Redis(process.env.REDIS_URL!, {
 });
 
 export const processCSV = new Worker('csv-processing', async job => {
-  const { filePath, tableName, userid, email, uploadId }: CSVJobData = job.data;
+  const { filePath, tableName, userid, email, uploadId, originalFileName }: CSVJobData = job.data;
   try {
-    logger.info('Starting CSV processing:', { filePath, tableName, uploadId });
+    logger.info('Starting CSV processing:', { filePath, originalFileName, tableName, uploadId });
     await job.updateProgress(10);
 
     const sampleRows = await getSampleRows(filePath, SAMPLE_ROW_LIMIT);
-    const analysis = await generateAnalysis(userid, tableName, Object.values(sampleRows));
-    if (!analysis) throw new Error('generateAnalysis failed');
+    // logger.info("Sample Rows: ", sampleRows);
+    // const analysis = await generateAnalysis(userid, tableName, Object.values(sampleRows));
+    const tableSchema = await generateTableSchema(userid, tableName, originalFileName, sampleRows);
+    if (!tableSchema) throw new Error('Schema generation failed');
 
-    const { schema, contain_columns } = analysis;
+    const { schema, contain_columns } = tableSchema;
+    logger.info("SCHEMA: ", schema);  
+      logger.info("COLUMN: ", contain_columns);
     await job.updateProgress(50);
 
     await createTableFromSchema(tableName, schema);

@@ -3,7 +3,7 @@ import pool from '../config/postgres';
 import logger from '../config/logger';
 import { SAMPLE_ROW_LIMIT, DATA_TIME_FORMAT } from '../config/constants';
 import { queueManager } from './queueManager';
-import { generateAnalysis } from '../controllers/dataController';
+import { generateTableSchema } from '../controllers/dataController';
 import readline from 'readline';
 import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
@@ -226,7 +226,8 @@ export const processCSV = async (jobData: CSVJobData): Promise<void> => {
     logger.info("Sample Rows: ", sampleRows);
 
     updateProgress(uploadId, 40);
-    const analysis = await generateAnalysis(userid, tableName, Object.values(sampleRows));
+    // const analysis = await generateAnalysis(userid, tableName, Object.values(sampleRows));
+    const analysis = await generateTableSchema(userid, tableName, sampleRows);
     if (!analysis) {
       throw new Error('generateAnalysis failed or returned undefined');
     }
@@ -241,7 +242,7 @@ export const processCSV = async (jobData: CSVJobData): Promise<void> => {
     updateProgress(uploadId, 70);
     
     // Import data with schema validation
-    await addDataIntoTableFromCSV(filePath, tableName, schema, contain_columns.contain_column);
+    // await addDataIntoTableFromCSV(filePath, tableName, schema, contain_columns.contain_column);
     updateProgress(uploadId, 90);
 
     // Delete the file after successful upload

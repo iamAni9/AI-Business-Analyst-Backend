@@ -281,8 +281,11 @@ const getUserData = async (req: Request, res: Response) => {
 }
 
 const checkUser = async (req: Request, res: Response) => {
+    logger.info('Cookies:', req.cookies);
+    logger.info('Session:', req.session);
     try {
          if (!req.session.user) {
+            logger.info("Issue in loggin");
             return res.status(401).json({ 
                 success: false, 
                 message: 'Not logged in' 

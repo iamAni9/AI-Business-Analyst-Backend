@@ -28,19 +28,43 @@ const checkUserExists = async (email: string): Promise<boolean> => {
   }
 };
 
-// Get analysis data for a table
-const getAnalysisData = async (tableName: string): Promise<any> => {
-  try {
-    const result = await pool.query(
-      'SELECT * FROM analysis_data WHERE table_id = $1 ORDER BY created_at DESC LIMIT 1',
-      [tableName]
+// // Get analysis data for a table
+// const getAnalysisData = async (tableName: string): Promise<any> => {
+//   try {
+//     const result = await pool.query(
+//       'SELECT * FROM analysis_data WHERE table_id = $1 ORDER BY created_at DESC LIMIT 1',
+//       [tableName]
+//     );
+//     return result.rows[0];
+//   } catch (error) {
+//     logger.error('Error retrieving analysis data:', error);
+//     throw error;
+//   }
+// };
+
+const deteleTempFile = async (tableId: string) : Promise<any> => {
+  try { 
+    await pool.query('BEGIN');
+
+    // 1. Deleting from analysis_table
+    await pool.query(
+      'DELETE FROM analysis_data WHERE table_name = $1',
+      [tableId]
     );
-    return result.rows[0];
+
+    // 2. Droping the actual temp table
+    const dropQuery = `DROP TABLE IF EXISTS "${tableId}"`;
+    await pool.query(dropQuery);
+
+    await pool.query('COMMIT');
+    logger.info(`Successfully deleted table "${tableId}" and its entry in analysis_data.`);
+    return true;
   } catch (error) {
-    logger.error('Error retrieving analysis data:', error);
+    await pool.query('ROLLBACK');
+    logger.error('Error while deleting data:', error);
     throw error;
   }
-};
+}
 
 router.post("/upload-csv", upload.array('files', 10), async (req: Request, res: Response) => {
   try {
@@ -120,7 +144,7 @@ router.post("/upload-csv", upload.array('files', 10), async (req: Request, res: 
           message: 'Upload accepted',
           originalFileName: file.originalname,
           uploadId: uniqueTableId,
-          tableName,
+          tableName: tableName,
           status: 'pending'
         });
 
@@ -149,27 +173,76 @@ router.post("/upload-csv", upload.array('files', 10), async (req: Request, res: 
 
 // Enhanced endpoint to check upload status 
 router.post("/upload-status/", (req: Request, res: Response) => {
-  const { uploadId } = req.body;
-  
-  setImmediate(async () => {
-    const status = await getJobStatus(uploadId);
-    // const status = await queueManager.getJobStatus(uploadId);
+  try {
+    const { uploadId } = req.body;
     
-    if (!status) {
-      res.status(404).json({ 
-        success: false, 
-        message: 'Upload ID not found',
-        uploadId
+    setImmediate(async () => {
+      const status = await getJobStatus(uploadId);
+      // const status = await queueManager.getJobStatus(uploadId);
+      
+      if (!status) {
+        res.status(404).json({ 
+          success: false, 
+          message: 'Upload ID not found',
+          uploadId
+        });
+        return;
+      }
+
+      res.json({ 
+        success: true, 
+        uploadId, 
+        ...status
+      });
+    });
+  } catch (error) {
+    logger.error("Unhandled error while checking status", error);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+});
+
+router.post("/delete-file/", async (req: Request, res: Response) => {
+  try {
+    const { fileId } = req.body;
+    
+    if (!req.session.user) {
+      res.status(401).json({ 
+          success: false,
+          message: 'Unauthorized' 
+      });
+      return;
+    }
+    const userid = req.session.user.id;
+    const email = req.session.user.email;
+
+    if (!userid || !email) {
+      logger.error('User does not authenticate.', { userid, email });
+      res.status(400).json({
+        success: false,
+        message: 'May be user does not loggedIn or not exist.',
       });
       return;
     }
 
-    res.json({ 
-      success: true, 
-      uploadId, 
-      ...status
+    const fileDeleted = await deteleTempFile(fileId);
+    if (!fileDeleted) {
+      logger.error('Error while deleting file:', { fileId });
+      res.status(404).json({
+        success: false,
+        message: 'Error while deleting file.',
+      });
+      return;
+    }
+
+    res.json({
+      success: true,
+      message: 'File deleted successfully',
     });
-  });
+
+  } catch (error) {
+    logger.error("Unhandled error while deleting file:", error);
+    res.status(500).json({ success: false, message: "Server error" });
+  };
 });
 
 export default router;

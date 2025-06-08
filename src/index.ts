@@ -19,9 +19,30 @@ const app = express();
 
 // Middlewares
 app.use(cors({
-  origin: 'http://localhost:5173', // frontend origin
-  credentials: true
+  origin: process.env.FRONTEND_ORIGIN?.split(',') || [],
+  credentials: true,
+  exposedHeaders: ['set-cookie']
 }));
+
+// Session middleware 
+const PgSession = connectPgSimple(session);
+
+app.use(session({
+  store: new PgSession({
+    pool: pool,
+    createTableIfMissing: true, 
+  }),
+  secret: 'abcd-1234-efgh-5678',  
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === 'production', 
+    maxAge: SESSION_EXPIRY
+  }
+}));
+
 app.use(morgan('combined', { stream })); // Request logging middleware
 
 app.use(express.json());
@@ -44,23 +65,6 @@ app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
   res.status(500).json({ error: 'Internal Server Error' });
 });
 
-// Session middleware 
-const PgSession = connectPgSimple(session);
-
-app.use(session({
-  store: new PgSession({
-    pool: pool,
-    createTableIfMissing: true, 
-  }),
-  secret: 'abcd-1234-efgh-5678',  
-  resave: false,
-  saveUninitialized: false,
-  cookie: {
-    httpOnly: true,
-    secure: false, 
-    maxAge: SESSION_EXPIRY
-  }
-}));
 
 declare module 'express-session' {
   interface SessionData {

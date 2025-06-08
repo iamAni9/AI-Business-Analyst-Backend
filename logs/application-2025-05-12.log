@@ -1,4 +1,0 @@
-{"level":"info","message":"Server is running on port 3000","service":"backend-service","timestamp":"2025-05-12 00:07:53"}
-{"level":"info","message":"Successfully connected to PostgreSQL","service":"backend-service","timestamp":"2025-05-12 00:07:55"}
-{"level":"info","message":"Server is running on port 3000","service":"backend-service","timestamp":"2025-05-12 00:08:26"}
-{"level":"info","message":"Successfully connected to PostgreSQL","service":"backend-service","timestamp":"2025-05-12 00:08:27"}

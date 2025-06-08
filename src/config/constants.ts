@@ -14,7 +14,13 @@ export const SAMPLE_ROW_LIMIT = 10;
 // Limits for chat controller
 export const MAX_RETRY_ATTEMPTS = 3;
 export const MAX_EVAL_ITERATION = 3;
-export const INITIAL_RETRY_DELAY = 1000; // 1 second
+export const INITIAL_RETRY_DELAY = 10; // 1 second
+
+// Schema batch size
+export const SCHEMA_BATCH_SIZE = 40;
+
+// CSV data insertion batch size
+export const CSV_DATA_INSERT_BATCH_SIZE = 200;
 
 // Date and Time format
 export const DATA_TIME_FORMAT = [
