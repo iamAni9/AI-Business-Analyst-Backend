@@ -18,8 +18,15 @@ dotenv.config();
 const app = express();
 
 // Middlewares
+const allowedOrigins = process.env.FRONTEND_ORIGIN?.split(',') || [];
 app.use(cors({
-  origin: process.env.FRONTEND_ORIGIN?.split(',') || [],
+   origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
   exposedHeaders: ['set-cookie']
 }));
@@ -37,7 +44,7 @@ app.use(session({
   saveUninitialized: false,
   cookie: {
     httpOnly: true,
-    sameSite: "lax",
+    sameSite: "none",
     secure: process.env.NODE_ENV === 'production', 
     maxAge: SESSION_EXPIRY
   }
