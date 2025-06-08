@@ -17,6 +17,8 @@ dotenv.config();
 
 const app = express();
 
+app.set('trust proxy', 1);
+
 // Middlewares
 const allowedOrigins = process.env.FRONTEND_ORIGIN?.split(',') || [];
 app.use(cors({
@@ -44,7 +46,7 @@ app.use(session({
   saveUninitialized: false,
   cookie: {
     httpOnly: true,
-    sameSite: "none",
+    sameSite: process.env.NODE_ENV === 'production' ? "none" : "lax", // Required for cross-origin  
     secure: process.env.NODE_ENV === 'production', 
     maxAge: SESSION_EXPIRY
   }
