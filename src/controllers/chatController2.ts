@@ -4,6 +4,8 @@ import logger from "../config/logger";
 import pool from "../config/postgres";
 import { MAX_RETRY_ATTEMPTS, MAX_EVAL_ITERATION, INITIAL_RETRY_DELAY } from '../config/constants';
 import { QUERY_CLASSIFICATION_PROMPT, COLUMN_SELECTION_FROM_USER_QUERY, AVAILABLE_FILE_SELECTION_BASED_ON_QUERY, GENERATE_ANALYSIS_FOR_USER_QUERY_PROMPT, SQL_GENERATION_PROMPT, ANALYSIS_EVAL_PROMPT } from "../config/prompts";
+// import { cleanAndParseJson } from "../utils/cleanJSONResponse";
+import { jsonrepair } from 'jsonrepair';
 
 interface QueryClassification {
     type: 'general' | 'data_no_chart' | 'data_with_chart';
@@ -172,17 +174,25 @@ const generateAnalysis = async (queryResults: string, userQuery: string) => {
     return retryOperation(
         async () => {
             const analysisResponse = await query(userPrompt, systemPrompt);
-            const cleanedResponse = analysisResponse.toString()
-                .replace(/```json\n|\n```/g, '')
-                .replace(/^\{.*?"|"\s*\}$/g, '')
-                .replace(/\\"/g, '"')
-                .trim();
-            
+            const dirtyString = analysisResponse.toString();
+
             try {
-                return JSON.parse(cleanedResponse);
+                // OPTIMISTIC: First, try to parse the string directly or with minimal cleaning.
+                // This regex extracts content from ```json ... ``` blocks.
+                const match = dirtyString.match(/```json\s*([\s\S]*?)\s*```/);
+                const extractedJson = match ? match[1] : dirtyString;
+                return JSON.parse(extractedJson);
             } catch (e) {
-                logger.error('Failed to parse analysis response:', cleanedResponse);
-                throw new Error('Failed to parse analysis response');
+                // PESSIMISTIC: If standard parsing fails, it's time to repair.
+                logger.warn('Standard JSON parsing failed, attempting to repair the string...');
+                try {
+                    const repairedJson = jsonrepair(dirtyString); // The magic happens here
+                    return JSON.parse(repairedJson);
+                } catch (repairError) {
+                    logger.error(`Failed to parse analysis response even after repair: ${dirtyString}`);
+                    // Throw the final error to trigger a retry or fail the operation.
+                    throw new Error('Failed to parse analysis response after attempting repair.');
+                }
             }
         },
         'LLM Analysis Generation'
@@ -213,7 +223,7 @@ const analysisEvaluation = async (analysis_data: any, queryResults: string, user
             }
             // Handle already-parsed object
             else if (typeof analysisResponse === 'object') {
-                logger.info("Analysis Response is already an object:", analysisResponse);
+                logger.info(`Analysis Response is already an object: ${analysisResponse}`);
                 return analysisResponse;
             } else {
                 throw new Error('Unexpected analysis response type');
@@ -226,10 +236,10 @@ const analysisEvaluation = async (analysis_data: any, queryResults: string, user
                 .trim();
 
             try {
-                logger.info("Cleaned Response:", cleaned);
+                logger.info(`Cleaned Response: ${cleaned}`);
                 return JSON.parse(cleaned);
             } catch (err) {
-                logger.error('Failed to parse analysis response:', cleaned);
+                logger.error(`Failed to parse analysis response: ${cleaned}`);
                 throw new Error('Failed to parse analysis response');
             }
         },

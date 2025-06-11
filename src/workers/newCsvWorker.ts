@@ -1,16 +1,13 @@
 import fs from 'fs';
-import pool from '../config/postgres';
 import logger from '../config/logger';
-import { SAMPLE_ROW_LIMIT, DATA_TIME_FORMAT, CSV_DATA_INSERT_BATCH_SIZE } from '../config/constants';
+import { SAMPLE_ROW_LIMIT, CSV_DATA_INSERT_BATCH_SIZE } from '../config/constants';
 import { generateTableSchema } from '../controllers/dataController';
+import { createTableFromSchema, typecastValue, insertBatchWithSchema } from '../utils/uploadDBUtils';
+import { TableSchema } from '../interfaces/dbUtilsInterfaces';
 import readline from 'readline';
-import dayjs from 'dayjs';
-import customParseFormat from 'dayjs/plugin/customParseFormat';
 import { Worker } from 'bullmq';
 import { Redis } from 'ioredis';
-
-dayjs.extend(customParseFormat);
-
+import { deteleTempTable } from '../utils/tableDeleteQuery';
 interface CSVJobData {
   filePath: string;
   tableName: string;
@@ -18,16 +15,6 @@ interface CSVJobData {
   email: string;
   uploadId: string;
   originalFileName: string;
-}
-
-interface ColumnSchema {
-  column_name: string;
-  data_type: string;
-  is_nullable: 'YES' | 'NO';
-}
-
-interface TableSchema {
-  columns: ColumnSchema[];
 }
 
 const getSampleRows = (filePath: string, sampleSize: number): Promise<Record<string, string>> => {
@@ -50,70 +37,6 @@ const getSampleRows = (filePath: string, sampleSize: number): Promise<Record<str
     rl.on('close', () => resolve(rows));
     rl.on('error', (err) => reject(err));
   });
-};
-
-const createTableFromSchema = async (tableName: string, schema: any) => {
-  try {
-    // Creating table using the generated schema from analysis
-    const columnDefinitions = schema.columns.map((col: any) => 
-      // `"${col.column_name}" ${col.data_type} ${col.is_nullable === 'NO' ? 'NOT NULL' : ''}`
-      `"${col.column_name}" ${col.data_type}`
-    ).join(',\n');
-
-    const createTableQuery = `
-      CREATE TABLE IF NOT EXISTS ${tableName} (
-        ${columnDefinitions}
-      );
-    `;
-
-    await pool.query(createTableQuery);
-    logger.info(`Table ${tableName} created successfully`);
-    return true;
-  } catch (error) {
-    logger.error('Error creating table from schema:', error);
-    throw error;
-  }
-};
-
-// Typecasting value during insertion
-const typecastValue = (value: string | null, type: string): any => {
-  if (value === null) return null;
-
-  switch (type.toLowerCase()) {
-    case 'integer':
-    case 'int':
-    case 'smallint':
-    case 'bigint':
-      return parseInt(value, 10) || null;
-
-    case 'real':
-    case 'double precision':
-    case 'float':
-    case 'numeric':
-    case 'decimal':
-      return parseFloat(value) || null;
-
-    case 'boolean':
-      return ['true', '1', 'yes'].includes(value.toLowerCase()) ? true :
-             ['false', '0', 'no'].includes(value.toLowerCase()) ? false :
-             null;
-
-    case 'date':
-    case 'timestamp':
-    case 'timestamp without time zone':
-    case 'timestamp with time zone': {
-      const formats = DATA_TIME_FORMAT;
-
-      for (const format of formats) {
-        const parsed = dayjs(value, format, true); // strict parsing
-        if (parsed.isValid()) return parsed.toDate(); // convert to JS Date
-      }
-      return null; // Unrecognized format
-    }
-
-    default:
-      return value;
-  }
 };
 
 const addDataIntoTableFromCSV = async (
@@ -180,48 +103,6 @@ const addDataIntoTableFromCSV = async (
   });
 };
 
-// Batch insertion
-const insertBatchWithSchema = async (
-  batch: Record<string, any>[],
-  tableName: string,
-  schema: TableSchema
-): Promise<void> => {
-  const columns = schema.columns.map(col => col.column_name);
-  // const values: any[] = batch.map(row => columns.map(col => row[col]));
-  const values: any[] = batch.map(row =>
-    columns.map(col => row[col] !== undefined ? row[col] : null)
-  );
-  
-  const flatValues = values.flat();
-  
-  logger.info(`Inserting ${batch.length} rows with ${columns.length} columns each`);
-  logger.info(`Total parameters: ${flatValues.length}`);
-
-  if (flatValues.length === 0 || batch.length === 0) {
-    console.warn(`Skipping insert into ${tableName} — no values to insert.`);
-    return;
-  }
-  
-  const expectedParams = batch.length * columns.length;
-  if (flatValues.length !== expectedParams) {
-    throw new Error(`Parameter count mismatch. Expected ${expectedParams}, got ${flatValues.length}`);
-  }
-
-  const valuePlaceholders = batch.map((_, i) => {
-    const offset = i * columns.length;
-    const rowPlaceholders = columns.map((_, j) => `$${offset + j + 1}`);
-    return `(${rowPlaceholders.join(', ')})`;
-  }).join(', ');
-
-  // logger.info("Place holder: ",valuePlaceholders);
-
-  const query = `
-    INSERT INTO "${tableName}" (${columns.map(col => `"${col}"`).join(', ')})
-    VALUES ${valuePlaceholders};
-  `;
-
-  await pool.query(query, flatValues);
-};
 
 const connection = new Redis(process.env.REDIS_URL!, {
    maxRetriesPerRequest: null,
@@ -234,14 +115,14 @@ export const processCSV = new Worker('csv-processing', async job => {
     await job.updateProgress(10);
 
     const sampleRows = await getSampleRows(filePath, SAMPLE_ROW_LIMIT);
-    // logger.info("Sample Rows: ", sampleRows);
+    logger.info("Sample Rows: ", sampleRows);
     // const analysis = await generateAnalysis(userid, tableName, Object.values(sampleRows));
     const tableSchema = await generateTableSchema(userid, tableName, originalFileName, sampleRows);
     if (!tableSchema) throw new Error('Schema generation failed');
 
     const { schema, contain_columns } = tableSchema;
-    logger.info("SCHEMA: ", schema);  
-      logger.info("COLUMN: ", contain_columns);
+    // logger.info("SCHEMA: ", schema);  
+      // logger.info("COLUMN: ", contain_columns);
     await job.updateProgress(50);
 
     await createTableFromSchema(tableName, schema);
@@ -250,10 +131,10 @@ export const processCSV = new Worker('csv-processing', async job => {
     await addDataIntoTableFromCSV(filePath, tableName, schema, contain_columns.contain_column);
     await job.updateProgress(90);
 
-    fs.unlink(filePath, err => {
-      if (err) logger.error('File delete error:', err);
-      else logger.info('File deleted:', { filePath });
-    });
+    // fs.unlink(filePath, err => {
+    //   if (err) logger.error('File delete error:', err);
+    //   else logger.info('File deleted:', { filePath });
+    // });
 
     await job.updateProgress(100);
     logger.info('CSV processing completed:', { uploadId });
@@ -263,7 +144,14 @@ export const processCSV = new Worker('csv-processing', async job => {
       stack: error instanceof Error ? error.stack : undefined,
       jobData: job.data
     });
+    logger.error(`[CSV Worker] Deleting table: ${tableName}`);
+    deteleTempTable(tableName);
     throw error;
+  } finally {
+    fs.unlink(filePath, err => {
+      if (err) logger.error('File delete error:', err);
+      else logger.info('File deleted:', { filePath });
+    });
   }
 }, { connection, concurrency: 5 });
 

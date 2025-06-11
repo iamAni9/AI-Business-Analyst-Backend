@@ -1,11 +1,12 @@
 import { Router, Request, Response } from "express";
 import logger from "../config/logger";
 import upload from "../middlewares/multer";
-// import { queueManager } from '../workers/queueManager';
 import pool from '../config/postgres';
 // import { v4 as uuidv4 } from 'uuid';
-import { csvQueue } from '../workers/bullQueue';
+import { csvQueue, excelQueue, jsonQueue } from '../workers/bullQueue';
 import { getJobStatus } from '../workers/jobStatus';
+import path from 'path';
+import { deteleTempTable } from "../utils/tableDeleteQuery";
 
 const router = Router();
 
@@ -42,29 +43,6 @@ const checkUserExists = async (email: string): Promise<boolean> => {
 //   }
 // };
 
-const deteleTempFile = async (tableId: string) : Promise<any> => {
-  try { 
-    await pool.query('BEGIN');
-
-    // 1. Deleting from analysis_table
-    await pool.query(
-      'DELETE FROM analysis_data WHERE table_name = $1',
-      [tableId]
-    );
-
-    // 2. Droping the actual temp table
-    const dropQuery = `DROP TABLE IF EXISTS "${tableId}"`;
-    await pool.query(dropQuery);
-
-    await pool.query('COMMIT');
-    logger.info(`Successfully deleted table "${tableId}" and its entry in analysis_data.`);
-    return true;
-  } catch (error) {
-    await pool.query('ROLLBACK');
-    logger.error('Error while deleting data:', error);
-    throw error;
-  }
-}
 
 router.post("/upload-csv", upload.array('files', 10), async (req: Request, res: Response) => {
   try {
@@ -112,32 +90,31 @@ router.post("/upload-csv", upload.array('files', 10), async (req: Request, res: 
     const uploadResults: any[] = [];
     for (const file of files) {
       try {
+        const ext = path.extname(file.originalname).toLowerCase();
         const uniqueTableId = generateTableId();
         const tableName = `table_${uniqueTableId}`;
         const filePath = file.path;
 
         logger.info('Processing file:', { originalName: file.originalname, tableName, filePath });
 
-        // Sending job to queue for async processing (LLM, schema, DB, final_schema_and_metadata)
-        // await queueManager.addJob({
-        //   filePath,
-        //   tableName,
-        //   userid,
-        //   email,
-        //   uploadId: uniqueTableId,
-        //   originalFileName: file.originalname
-        // });
-
-        await csvQueue.add('csv-processing', {
+        const jobData = {
           filePath,
           tableName,
           userid,
           email,
           uploadId: uniqueTableId,
           originalFileName: file.originalname
-        }, {
-          jobId: uniqueTableId  // Custom ID as the BullMQ job ID
-        });
+        };
+
+        if (ext === '.csv') {
+          await csvQueue.add('csv-processing', jobData, { jobId: uniqueTableId });
+        } else if (ext === '.xlsx' || ext === '.xls') {
+          await excelQueue.add('excel-processing', jobData, { jobId: uniqueTableId });
+        } else if (ext === '.json') {
+          await jsonQueue.add('json-processing', jobData, { jobId: uniqueTableId });
+        } else {
+          throw new Error(`Unsupported file format: ${ext}`);
+        }
 
         uploadResults.push({
           success: true,
@@ -174,10 +151,21 @@ router.post("/upload-csv", upload.array('files', 10), async (req: Request, res: 
 // Enhanced endpoint to check upload status 
 router.post("/upload-status/", (req: Request, res: Response) => {
   try {
-    const { uploadId } = req.body;
+    const { uploadId, type } = req.body;
     
+    if (!uploadId || !type) {
+      logger.error('Missing required fields:', { uploadId, type });
+      res.status(400).json({
+        success: false,
+        message: 'Provide both fileId and type',
+        status: 'failed'
+      });
+      return;
+    }
+    
+    logger.info(`File id: ${uploadId} and type: ${type}`);
     setImmediate(async () => {
-      const status = await getJobStatus(uploadId);
+      const status = await getJobStatus(uploadId, type.toLowerCase());
       // const status = await queueManager.getJobStatus(uploadId);
       
       if (!status) {
@@ -224,7 +212,7 @@ router.post("/delete-file/", async (req: Request, res: Response) => {
       return;
     }
 
-    const fileDeleted = await deteleTempFile(fileId);
+    const fileDeleted = await deteleTempTable(fileId);
     if (!fileDeleted) {
       logger.error('Error while deleting file:', { fileId });
       res.status(404).json({

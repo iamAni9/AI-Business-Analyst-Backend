@@ -2,8 +2,7 @@ import pool from "../config/postgres";
 import logger from "../config/logger";
 import { query } from "../ai/client";
 import { SCHEMA_BATCH_SIZE } from "../config/constants";
-import { SCHEMA_GENERATION, DATA_ANALYSIS } from "../config/prompts";
-import { info } from "winston";
+import { SCHEMA_GENERATION } from "../config/prompts";
 
 interface SchemaColumn {
   column_name: string;
@@ -27,7 +26,7 @@ interface SchemaFormat {
   column_insights: Record<string, ColumnInsight>;
 }
 
-const getSchema = async (table_name: string, sampleRows: any[]) => {
+const getSchema = async (table_name: string, sampleRows: any[], columnNo: number) => {
     logger.info(`Starting analysis for table: ${table_name}`);
     const responseFormat = `
         "schema": {
@@ -59,6 +58,7 @@ const getSchema = async (table_name: string, sampleRows: any[]) => {
     const userQuery = `
         Table Name: ${table_name}
         Sample Datarows: ${sampleRows}
+        Number of Columns: ${columnNo}
 
         ${SCHEMA_GENERATION.userPrompt}
         
@@ -255,24 +255,66 @@ const getSchema = async (table_name: string, sampleRows: any[]) => {
 //     }
 // };
 
+// const splitSampleRowsByColumnBatch = (sampleRows: Record<string, string>, batchSize: number) => {
+//   const rowKeys = Object.keys(sampleRows);
+//   if (rowKeys.length === 0) return [];
+
+//   // Split each row into columns and trim whitespace
+//   const columnMatrix = rowKeys.map(rowKey => 
+//     sampleRows[rowKey].split(',')
+//       .map(col => col.trim())
+//       .filter(col => col.length > 0) // Filter out empty columns
+//   );
+
+//   // Verify all rows have the same number of columns
+//   const columnCounts = new Set(columnMatrix.map(cols => cols.length));
+//   if (columnCounts.size > 1) {
+//     throw new Error("All rows must have the same number of columns");
+//   }
+
+//   const totalColumns = columnMatrix[0].length;
+//   const batches: Record<string, string>[] = [];
+
+//   for (let start = 0; start < totalColumns; start += batchSize) {
+//     const end = Math.min(start + batchSize, totalColumns);
+//     const batch: Record<string, string> = {};
+
+//     rowKeys.forEach((rowKey, i) => {
+//       const columns = columnMatrix[i].slice(start, end);
+//       batch[rowKey] = columns.join(', ');
+//     });
+
+//     // logger.info(`Batch:  ${batch.row01}`);
+//     // logger.info(`Batch:  ${batch.row02}`);
+//     batches.push(batch);
+//   }
+
+//   return batches;
+// };
+
 const splitSampleRowsByColumnBatch = (sampleRows: Record<string, string>, batchSize: number) => {
   const rowKeys = Object.keys(sampleRows);
   if (rowKeys.length === 0) return [];
 
   // Split each row into columns and trim whitespace
-  const columnMatrix = rowKeys.map(rowKey => 
+  const columnMatrix = rowKeys.map(rowKey =>
     sampleRows[rowKey].split(',')
       .map(col => col.trim())
-      .filter(col => col.length > 0) // Filter out empty columns
   );
 
-  // Verify all rows have the same number of columns
-  const columnCounts = new Set(columnMatrix.map(cols => cols.length));
-  if (columnCounts.size > 1) {
-    throw new Error("All rows must have the same number of columns");
-  }
+  // Find the maximum number of columns in any row
+  const maxColumns = Math.max(...columnMatrix.map(cols => cols.length));
 
-  const totalColumns = columnMatrix[0].length;
+  // Pad shorter rows with empty strings or nulls
+  const normalizedMatrix = columnMatrix.map(cols => {
+    const padded = [...cols];
+    while (padded.length < maxColumns) {
+      padded.push('NULL'); // or use `null` if you prefer
+    }
+    return padded;
+  });
+
+  const totalColumns = maxColumns;
   const batches: Record<string, string>[] = [];
 
   for (let start = 0; start < totalColumns; start += batchSize) {
@@ -280,12 +322,10 @@ const splitSampleRowsByColumnBatch = (sampleRows: Record<string, string>, batchS
     const batch: Record<string, string> = {};
 
     rowKeys.forEach((rowKey, i) => {
-      const columns = columnMatrix[i].slice(start, end);
+      const columns = normalizedMatrix[i].slice(start, end);
       batch[rowKey] = columns.join(', ');
     });
 
-    // logger.info(`Batch:  ${batch.row01}`);
-    // logger.info(`Batch:  ${batch.row02}`);
     batches.push(batch);
   }
 
@@ -302,11 +342,14 @@ export const generateTableSchema = async (userid: string, tableName: string, fil
 
         for (let i = 0; i < columnBatches.length; i++) {
             logger.info(`Processing batch ${i + 1}/${columnBatches.length}`);
-            logger.info(`Current Batch Row1 : ${columnBatches[i].row01}`);
+            // logger.info(`Current Batch Row1 : ${columnBatches[i].row01}`);
+            const row1 = columnBatches[i].row01;
+            const columns = row1.split(',').map(col => col.trim()); // Trim to clean extra spaces
+            // logger.info(`Number of columns in Row1: ${columns.length}`);
             // logger.info(`Current Batch Row2: ${columnBatches[i].row02}`);
             // logger.info(`Current Batch Row3: ${columnBatches[i].row03}`);
             // logger.info(`Current Batch Row4: ${columnBatches[i].row04}`);
-            const batchSchema = await getSchema(tableName, Object.values(columnBatches[i]));
+            const batchSchema = await getSchema(tableName, Object.values(columnBatches[i]), columns.length);
             allSchemas.push(batchSchema);
         }
 
@@ -360,60 +403,4 @@ export const generateTableSchema = async (userid: string, tableName: string, fil
         logger.error("Failed to generate schema from CSV:", error);
         throw error;
   }
-    
-    
-    // try {
-
-
-
-    //     // Generating analysis
-    //     const analysis = await getAnalysis(tableName, sampleRows);
-    //     logger.info('Analysis generated successfully');
-
-    //     // Storing analysis in PostgreSQL  
-    //     const created_at = new Date();
-
-    //     logger.info('Inserting analysis into PostgreSQL...');
-    //     const insertQuery = `
-    //         INSERT INTO analysis_data (
-    //             id, table_name, table_description, schema, analysis,
-    //             data_summary, column_insights, business_context, data_relationships, data_trends, created_at
-    //         ) VALUES (
-    //             $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11
-    //         )
-    //         RETURNING id;
-    //     `;
-
-    //     const values = [
-    //         userid,
-    //         tableName,
-    //         analysis.table_description,
-    //         JSON.stringify(analysis.schema),
-    //         JSON.stringify(analysis.analysis),
-    //         JSON.stringify(analysis.data_summary),
-    //         JSON.stringify(analysis.column_insights),
-    //         // JSON.stringify(analysis.data_quality_metrics),
-    //         JSON.stringify(analysis.business_context),
-    //         JSON.stringify(analysis.data_relationships),
-    //         JSON.stringify(analysis.data_trends),
-    //         // JSON.stringify(analysis.recommendations),
-    //         created_at
-    //     ];
-
-    //     const { rows } = await pool.query(insertQuery, values);
-    //     logger.info('Analysis stored successfully in PostgreSQL');
-    //     // logger.info('Schema: ', analysis.schema);
-    //     // logger.info('Contain Columns: ', analysis.contain_columns);
-    //     return {
-    //         schema: analysis.schema,
-    //         contain_columns: analysis.contain_columns
-    //     };
-
-    // } catch (error: any) {
-    //     logger.error('Error generating analysis:', error);
-    //     return;
-    // }
 };
-
-// export { generateAnalysis };
-

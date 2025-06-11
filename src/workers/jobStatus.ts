@@ -1,11 +1,20 @@
 // import { Job, Queue } from 'bullmq';
-import { csvQueue } from './bullQueue';
+import { csvQueue, excelQueue, jsonQueue } from './bullQueue';
 import logger from "../config/logger";
 
-export async function getJobStatus(uploadId: string) {
+export async function getJobStatus(uploadId: string, fileType: string) {
   try {
     // Now we can directly get the job using your uploadId since we set it as jobId
-    const job = await csvQueue.getJob(uploadId);
+    let job;
+    logger.info("Checking status");
+    if (fileType === '.csv') {
+      job = await csvQueue.getJob(uploadId);
+    } else if (fileType === '.xlsx' || fileType === '.xls') {
+      job = await excelQueue.getJob(uploadId);
+    } else if (fileType === '.json') {
+      job = await jsonQueue.getJob(uploadId);
+    } 
+    
     logger.info("Job: ", {job});
 
     if (!job) {

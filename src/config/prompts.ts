@@ -26,8 +26,8 @@ export const SCHEMA_GENERATION = {
         - If column names are present in the sample rows, use them; make adjustments if necessary; Make necessary corrections for typos or formatting issues (e.g., 'loc atioc' → 'location', 'em#il' → 'email').
         - If no column names are given, infer them based on the data values.
         - If column name is **NULL**, rename it based on other rows data value of same index.
-        - If two or more columns have same name, change them. Don't use same name for columns. 
-        - The number of **columns** in the schema should match the number of **columns in the sample rows**. That is length of the rows.
+        - STRICT: If two or more columns have same name, change them. Don't use same name for columns. 
+        - The number of **columns** in the schema must be equals to the **Number of Columns** passing.
         - It may be possible all the values in sample rows are NULL. In that case keep them NULL.
         - Preserve the original column order as shown in the sample rows.
         - If the sampleRows include column names, update the contain_column with YES otherwise NO only. 
@@ -192,7 +192,7 @@ export const GENERATE_ANALYSIS_FOR_USER_QUERY_PROMPT = {
         Format your response as a JSON object with the following structure:
         {
             "analysis" : {
-                ----- STRICT NOTE: WHILE writing this 'analysis' don't use the table name "table_----" -----
+                ----- STRICT NOTE: WHILE writing this 'analysis' don't use the table name "table_----" instead use file name from schema-----
                 "summary": "A clear, one-paragraph overview of the key findings.",
                 "key_insights": [
                     "List 3-5 main findings with specific numbers."
