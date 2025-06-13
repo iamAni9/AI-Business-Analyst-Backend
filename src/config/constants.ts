@@ -20,7 +20,7 @@ export const INITIAL_RETRY_DELAY = 10; // 1 second
 export const SCHEMA_BATCH_SIZE = 40;
 
 // CSV data insertion batch size
-export const CSV_DATA_INSERT_BATCH_SIZE = 200;
+export const CSV_DATA_INSERT_BATCH_SIZE = 800;
 
 // Date and Time format
 export const DATA_TIME_FORMAT = [

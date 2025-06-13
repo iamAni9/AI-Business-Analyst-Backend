@@ -292,20 +292,47 @@ const getSchema = async (table_name: string, sampleRows: any[], columnNo: number
 //   return batches;
 // };
 
+const parseCsvRow = (row: string): string[] => {
+  const result: string[] = [];
+  let currentField = '';
+  let inQuotes = false;
+
+  for (let i = 0; i < row.length; i++) {
+    const char = row[i];
+
+    if (char === '"') {
+      // Toggling the inQuotes flag. Assumes quotes are not escaped within fields.
+      inQuotes = !inQuotes;
+    } else if (char === ',' && !inQuotes) {
+      // If we see a comma and we're not in quotes, it's a delimiter.
+      result.push(currentField.trim());
+      currentField = '';
+    } else {
+      // Appending the character to the current field.
+      currentField += char;
+    }
+  }
+  // Adding the last field
+  result.push(currentField.trim());
+
+  return result;
+};
+
 const splitSampleRowsByColumnBatch = (sampleRows: Record<string, string>, batchSize: number) => {
   const rowKeys = Object.keys(sampleRows);
   if (rowKeys.length === 0) return [];
 
-  // Split each row into columns and trim whitespace
+  // Spliting each row into columns and trim whitespace
   const columnMatrix = rowKeys.map(rowKey =>
-    sampleRows[rowKey].split(',')
-      .map(col => col.trim())
+    // sampleRows[rowKey].split(',')
+    //   .map(col => col.trim())
+    parseCsvRow(sampleRows[rowKey])
   );
 
-  // Find the maximum number of columns in any row
+  // Finding the maximum number of columns in any row
   const maxColumns = Math.max(...columnMatrix.map(cols => cols.length));
 
-  // Pad shorter rows with empty strings or nulls
+  // Padding shorter rows with empty strings or nulls
   const normalizedMatrix = columnMatrix.map(cols => {
     const padded = [...cols];
     while (padded.length < maxColumns) {
@@ -342,10 +369,10 @@ export const generateTableSchema = async (userid: string, tableName: string, fil
 
         for (let i = 0; i < columnBatches.length; i++) {
             logger.info(`Processing batch ${i + 1}/${columnBatches.length}`);
-            // logger.info(`Current Batch Row1 : ${columnBatches[i].row01}`);
+            logger.info(`Current Batch Row1 : ${columnBatches[i].row01}`);
             const row1 = columnBatches[i].row01;
             const columns = row1.split(',').map(col => col.trim()); // Trim to clean extra spaces
-            // logger.info(`Number of columns in Row1: ${columns.length}`);
+            logger.info(`Number of columns in Row1: ${columns.length}`);
             // logger.info(`Current Batch Row2: ${columnBatches[i].row02}`);
             // logger.info(`Current Batch Row3: ${columnBatches[i].row03}`);
             // logger.info(`Current Batch Row4: ${columnBatches[i].row04}`);
@@ -356,7 +383,7 @@ export const generateTableSchema = async (userid: string, tableName: string, fil
         //Merging all schemas
         const mergedSchema: SchemaFormat = {
             schema: { columns: [] },
-            contain_columns: { contain_column: "YES" },
+            contain_columns: { contain_column: "NO" },
             column_insights: {},
         };
 
@@ -364,8 +391,8 @@ export const generateTableSchema = async (userid: string, tableName: string, fil
             mergedSchema.schema.columns.push(...part.schema.columns);
             Object.assign(mergedSchema.column_insights, part.column_insights);
             
-            if (part.contain_columns?.contain_column === "NO") {
-                mergedSchema.contain_columns.contain_column = "NO";
+            if (part.contain_columns?.contain_column === "YES") {
+                mergedSchema.contain_columns.contain_column = "YES";
             }
         }
 

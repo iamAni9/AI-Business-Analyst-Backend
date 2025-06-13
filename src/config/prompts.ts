@@ -33,6 +33,7 @@ export const SCHEMA_GENERATION = {
         - If the sampleRows include column names, update the contain_column with YES otherwise NO only. 
         - For data type inference, use the provided list of PostgreSQL date/time formats below and assign appropriate PostgreSQL types: DATE, TIME, TIMESTAMP, TIMESTAMPTZ.
         - If a column contains multiple date/time formats, choose the most general type to cover all data (e.g., TIMESTAMPTZ over DATE).
+        - STRICT: If any column has values like 17,50,000 assign that column as TEXT type not NUMERIC or other.
         - It may be possible both column and its rows value are NULL, in that case keep them as it is.
 
         Strictly respond ONLY in VALID JSON format.
